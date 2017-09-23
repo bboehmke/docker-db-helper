@@ -87,7 +87,7 @@ postgresql_init() {
   psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE to $DB_USER;" > /dev/null
 
   # TODO make this configurable
-  psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "CREATE EXTENSION pg_trgm;" > /dev/null 2> /dev/null
+  psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -d $DB_DATABASE -tc "CREATE EXTENSION pg_trgm;" > /dev/null 2> /dev/null
 }
 
 
