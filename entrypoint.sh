@@ -57,6 +57,16 @@ check_database_connection() {
 }
 
 
+postgresql_clear_init() {
+  result=`psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "SELECT datname FROM pg_catalog.pg_database WHERE datname like '$DB_DATABASE';"`
+  if [ $result ]; then
+    psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "drop database if exists $DB_DATABASE;" > /dev/null
+    echo "Removed database \"$DB_DATABASE\""
+  fi
+
+  postgresql_init
+}
+
 postgresql_init() {
   result=`psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "SELECT datname FROM pg_catalog.pg_database WHERE datname like '$DB_DATABASE';"`
   if [ ! $result ]; then
@@ -75,6 +85,17 @@ postgresql_init() {
   fi
 
   psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE to $DB_USER;" > /dev/null
+}
+
+
+mysql_clear_init() {
+  result=`mysql -P $DB_PORT -u$DB_ROOT_USER -p$DB_ROOT_PASSWORD -h$DB_HOST -Bse "show databases like '$DB_DATABASE';"`
+  if [ $result ]; then
+    mysql -P $DB_PORT -u$DB_ROOT_USER -p$DB_ROOT_PASSWORD -h$DB_HOST -Bse "drop database if exists $DB_DATABASE;"
+    echo "Removed database \"$DB_DATABASE\""
+  fi
+
+  mysql_init
 }
 
 mysql_init() {
@@ -99,16 +120,32 @@ mysql_init() {
 
 
 case ${1} in
-  app:init)
+  app:init|app:clear_init)
     check_database_connection
 
     case ${DB_TYPE} in
       postgresql)
-        postgresql_init
+        case ${1} in
+          app:init)
+            postgresql_init
+            ;;
+
+          app:clear_init)
+            postgresql_clear_init
+            ;;
+        esac
         ;;
 
       mysql)
-        mysql_init
+        case ${1} in
+          app:init)
+            mysql_init
+            ;;
+
+          app:clear_init)
+            mysql_clear_init
+            ;;
+        esac
         ;;
     esac
     ;;

@@ -35,6 +35,12 @@ services:
 ```
 
 
+Possible Commands
+-----------------
+- **app:init**: (Default) Create database and user if not exist
+- **app:clear_init**: Like `app:init` but remove all tables from database
+
+
 Available Configuration Parameters
 ----------------------------------
 
