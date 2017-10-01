@@ -52,3 +52,4 @@ Available Configuration Parameters
 - **DB_DATABASE**: Database to create
 - **DB_USER**: User to create with access to `DB_DATABASE`
 - **DB_PASSWORD**: Password of `DB_USER`
+- **BACKUP_SCHEDULE**: If set an SQL dump of the database is created automatically all `15min`, `hourly`, `daily`, `weekly` or `monthly`
