@@ -1,6 +1,9 @@
 #!/bin/sh
 set -e
 
+if [[ $DEBUG == true ]]; then
+  set -x
+fi
 
 case ${DB_TYPE} in
   postgresql)
@@ -87,7 +90,27 @@ postgresql_init() {
   psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE to $DB_USER;" > /dev/null
 
   # TODO make this configurable
-  psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -d $DB_DATABASE -tc "CREATE EXTENSION pg_trgm;" > /dev/null 2> /dev/null
+  psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -d $DB_DATABASE -tc "CREATE EXTENSION pg_trgm;" > /dev/null 2> /dev/null || true
+}
+
+postgresql_auto_backup() {
+  case ${BACKUP_SCHEDULE} in
+    15min|hourly|daily|weekly|monthly)
+      # create backup dir
+      mkdir -p /backup
+      
+      # create backup script
+      cat > /etc/periodic/${BACKUP_SCHEDULE}/backup <<EOF
+#!/bin/sh
+
+export PGPASSWORD=$DB_ROOT_PASSWORD
+
+now=\$(date +"%Y%d%m_%H%M%S")
+pg_dump -h ${DB_HOST} -p ${DB_PORT} -U ${DB_ROOT_USER} ${DB_DATABASE} | gzip -c > /backup/${DB_DATABASE}_\${now}.sql.gz
+EOF
+      chmod +x /etc/periodic/${BACKUP_SCHEDULE}/backup
+      ;;
+  esac
 }
 
 
@@ -121,6 +144,24 @@ mysql_init() {
   mysql -P $DB_PORT -u$DB_ROOT_USER -p$DB_ROOT_PASSWORD -h$DB_HOST -Bse "GRANT ALL PRIVILEGES ON \`$DB_DATABASE\`.* TO '$DB_USER'@'%';"
 }
 
+mysql_auto_backup() {
+  case ${BACKUP_SCHEDULE} in
+    15min|hourly|daily|weekly|monthly)
+      # create backup dir
+      mkdir -p /backup
+      
+      # create backup script
+      cat > /etc/periodic/${BACKUP_SCHEDULE}/backup <<EOF
+#!/bin/sh
+
+now=\$(date +"%Y%d%m_%H%M%S")
+mysqldump -h ${DB_HOST} -P ${DB_PORT} -u ${DB_ROOT_USER} -p$DB_ROOT_PASSWORD ${DB_DATABASE} | gzip -c > /backup/${DB_DATABASE}_\${now}.sql.gz
+EOF
+      chmod +x /etc/periodic/${BACKUP_SCHEDULE}/backup
+      ;;
+  esac
+}
+
 
 case ${1} in
   app:init|app:clear_init)
@@ -137,6 +178,8 @@ case ${1} in
             postgresql_clear_init
             ;;
         esac
+
+        postgresql_auto_backup
         ;;
 
       mysql)
@@ -149,8 +192,12 @@ case ${1} in
             mysql_clear_init
             ;;
         esac
+
+        mysql_auto_backup
         ;;
     esac
+
+    exec /usr/sbin/crond -f
     ;;
   *)
     exec "$@"

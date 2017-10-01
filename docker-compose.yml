@@ -1,0 +1,49 @@
+version: "2"
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment: 
+      - POSTGRES_PASSWORD=root
+    restart: always
+
+  postgres_init:
+    restart: always
+    image: bboehmke/db-helper
+    command: "app:init"
+    volumes:
+      - ./data/backup:/backup
+    environment:
+#      - DEBUG=true
+      - DB_TYPE=postgresql
+      - DB_ROOT_PASSWORD=root
+      - DB_HOST=postgres
+      - DB_DATABASE=postgres_database
+      - DB_USER=postgres_database
+      - DB_PASSWORD=postgres_database
+      - BACKUP_SCHEDULE=15min
+
+
+  mariadb:
+    container_name: mariadb
+    image: mariadb
+    environment: 
+      - MYSQL_ROOT_PASSWORD=root
+    restart: always
+
+  mysql_init:
+    restart: always
+    image: bboehmke/db-helper
+    command: "app:init"
+    volumes:
+      - ./data/backup:/backup
+    environment:
+#      - DEBUG=true
+      - DB_TYPE=mysql
+      - DB_ROOT_PASSWORD=root
+      - DB_HOST=mariadb
+      - DB_DATABASE=mysql_database
+      - DB_USER=mysql_database
+      - DB_PASSWORD=mysql_database
+      - BACKUP_SCHEDULE=15min
