@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-if [[ $DEBUG == true ]]; then
+if [[ "$DEBUG" == "true" ]]; then
   set -x
 fi
 
