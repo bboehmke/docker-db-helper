@@ -71,14 +71,6 @@ postgresql_clear_init() {
 }
 
 postgresql_init() {
-  result=`psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "SELECT datname FROM pg_catalog.pg_database WHERE datname like '$DB_DATABASE';"`
-  if [ ! $result ]; then
-    psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "create database $DB_DATABASE;" > /dev/null
-    echo "Database \"$DB_DATABASE\" created"
-  else
-    echo "Database \"$DB_DATABASE\" already exist"
-  fi
-
   result=`psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "SELECT usename FROM pg_catalog.pg_user WHERE usename = '$DB_USER';"`
   if [ ! $result ]; then
     psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -c "CREATE ROLE $DB_USER with LOGIN CREATEDB PASSWORD '$DB_PASSWORD';" > /dev/null
@@ -86,6 +78,15 @@ postgresql_init() {
   else
     echo "User \"$DB_USER\" already exist"
   fi
+
+  result=`psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "SELECT datname FROM pg_catalog.pg_database WHERE datname like '$DB_DATABASE';"`
+  if [ ! $result ]; then
+    psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "create database $DB_DATABASE OWNER $DB_USER;" > /dev/null
+    echo "Database \"$DB_DATABASE\" created"
+  else
+    echo "Database \"$DB_DATABASE\" already exist"
+  fi
+
 
   psql -h$DB_HOST -p $DB_PORT -U$DB_ROOT_USER -tc "GRANT ALL PRIVILEGES ON DATABASE $DB_DATABASE to $DB_USER;" > /dev/null
 

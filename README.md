@@ -23,7 +23,6 @@ In compose file:
 ```
 services:
   db_init:
-    restart: "no"
     image: bboehmke/db-helper
     environment:
     - DB_TYPE=postgresql
