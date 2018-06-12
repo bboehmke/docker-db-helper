@@ -109,7 +109,7 @@ postgresql_auto_backup() {
 
 export PGPASSWORD=$DB_ROOT_PASSWORD
 
-now=\$(date +"%Y%d%m_%H%M%S")
+now=\$(date +"%Y%m%d_%H%M%S")
 pg_dump -h ${DB_HOST} -p ${DB_PORT} -U ${DB_ROOT_USER} ${DB_DATABASE} | gzip -c > /backup/${DB_DATABASE}_\${now}.sql.gz
 EOF
       chmod +x /etc/periodic/${BACKUP_SCHEDULE}/backup
@@ -158,7 +158,7 @@ mysql_auto_backup() {
       cat > /etc/periodic/${BACKUP_SCHEDULE}/backup <<EOF
 #!/bin/sh
 
-now=\$(date +"%Y%d%m_%H%M%S")
+now=\$(date +"%Y%m%d_%H%M%S")
 mysqldump -h ${DB_HOST} -P ${DB_PORT} -u ${DB_ROOT_USER} -p$DB_ROOT_PASSWORD ${DB_DATABASE} | gzip -c > /backup/${DB_DATABASE}_\${now}.sql.gz
 EOF
       chmod +x /etc/periodic/${BACKUP_SCHEDULE}/backup
